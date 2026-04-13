@@ -36,13 +36,15 @@ async def run_pipeline(payload: JiraWebhookPayload, settings: Settings) -> None:
     langfuse = create_langfuse_client(settings)
 
     try:
+        logger.info("[%s] Starting pipeline", payload.issue_key)
+
         initial_state = {
             "issue_key": payload.issue_key,
             "story_data": payload.model_dump(),
         }
 
         with langfuse.start_as_current_observation(name=payload.issue_key):
-            await compiled_graph.ainvoke(
+            result = await compiled_graph.ainvoke(
                 initial_state,
                 config={
                     "configurable": {
@@ -53,10 +55,15 @@ async def run_pipeline(payload: JiraWebhookPayload, settings: Settings) -> None:
                 },
             )
 
-        logger.info("Pipeline completed for %s", payload.issue_key)
+        logger.info(
+            "[%s] Pipeline completed — score=%s category=%s",
+            payload.issue_key,
+            result.get("rounded_score"),
+            result.get("category"),
+        )
 
     except Exception:
-        logger.exception("Pipeline failed for %s", payload.issue_key)
+        logger.exception("[%s] Pipeline failed", payload.issue_key)
 
     finally:
         langfuse.flush()
@@ -69,6 +76,7 @@ async def webhook_story_ready(
     _api_key: str = Depends(verify_api_key),
     settings: Settings = Depends(get_settings),
 ) -> dict:
+    logger.info("[%s] Webhook received — launching async pipeline", payload.issue_key)
     asyncio.create_task(run_pipeline(payload, settings))
     return {"status": "accepted", "issue_key": payload.issue_key}
 

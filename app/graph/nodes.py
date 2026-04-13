@@ -20,9 +20,12 @@ def _safe(value: object) -> str:
 
 
 async def evaluate_story(state: StoryState, config: RunnableConfig) -> dict:
+    issue_key = state["issue_key"]
     langfuse: Langfuse = config["configurable"]["langfuse"]
     gateway: LLMGateway = config["configurable"]["gateway"]
     story = state["story_data"]
+
+    logger.info("[%s] Node: evaluate_story — starting LLM evaluation", issue_key)
 
     with langfuse.start_as_current_observation(name="evaluate_story", as_type="span", input=story):
         system_prompt = get_prompt("evaluate_story", "system")
@@ -65,13 +68,19 @@ async def evaluate_story(state: StoryState, config: RunnableConfig) -> dict:
             "sizing": {"score": result.sizing.score, "reasoning": result.sizing.reasoning},
         }
 
+    scores = {k: v["score"] for k, v in evaluation.items()}
+    logger.info("[%s] Node: evaluate_story — scores: %s", issue_key, scores)
+
     return {"evaluation": evaluation}
 
 
 async def generate_output(state: StoryState, config: RunnableConfig) -> dict:
+    issue_key = state["issue_key"]
     langfuse: Langfuse = config["configurable"]["langfuse"]
     gateway: LLMGateway = config["configurable"]["gateway"]
     evaluation = state["evaluation"]
+
+    logger.info("[%s] Node: generate_output — generating report and remediations", issue_key)
 
     with langfuse.start_as_current_observation(
         name="generate_output", as_type="span", input={"evaluation": evaluation}
@@ -92,6 +101,14 @@ async def generate_output(state: StoryState, config: RunnableConfig) -> dict:
             langfuse=langfuse,
         )
 
+    logger.info(
+        "[%s] Node: generate_output — final_score=%.1f rounded_score=%d remediations=%d",
+        issue_key,
+        result.final_score,
+        result.rounded_score,
+        len(result.remediation_suggestions),
+    )
+
     return {
         "final_score": result.final_score,
         "rounded_score": result.rounded_score,
@@ -104,6 +121,7 @@ async def generate_output(state: StoryState, config: RunnableConfig) -> dict:
 
 
 async def determine_category(state: StoryState, config: RunnableConfig) -> dict:
+    issue_key = state["issue_key"]
     langfuse: Langfuse = config["configurable"]["langfuse"]
     rounded_score = state["rounded_score"]
 
@@ -112,6 +130,8 @@ async def determine_category(state: StoryState, config: RunnableConfig) -> dict:
     ):
         category = "NOT READY" if rounded_score <= 3 else "READY"
         langfuse.update_current_span(output={"category": category})
+
+    logger.info("[%s] Node: determine_category — score=%d → %s", issue_key, rounded_score, category)
 
     return {"category": category}
 
@@ -124,19 +144,23 @@ async def jira_write(state: StoryState, config: RunnableConfig) -> dict:
     category = state["category"]
     jira_comment = state["jira_comment"]
 
+    logger.info("[%s] Node: jira_write — posting comment, category=%s", issue_key, category)
+
     with langfuse.start_as_current_observation(
         name="jira_write", as_type="span", input={"issue_key": issue_key, "category": category}
     ):
         try:
             await jira_client.add_comment(issue_key, jira_comment)
+            logger.info("[%s] Node: jira_write — comment posted", issue_key)
 
             if category == "NOT READY":
                 await jira_client.transition_issue(issue_key, "Not Dev Ready")
+                logger.info("[%s] Node: jira_write — transitioned to Not Dev Ready", issue_key)
 
             langfuse.update_current_span(output={"status": "success"})
             return {"jira_write_status": "success"}
 
         except Exception as e:
-            logger.exception("Jira write failed for %s", issue_key)
+            logger.exception("[%s] Node: jira_write — failed: %s", issue_key, e)
             langfuse.update_current_span(output={"status": "failed", "error": str(e)})
             return {"jira_write_status": f"failed: {e}"}
