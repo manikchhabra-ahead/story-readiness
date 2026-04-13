@@ -1,7 +1,7 @@
 .PHONY: dev up down install lint format fix check
 
 dev:
-	uv run uvicorn app.main:app --reload --port 8000
+	SSL_CERT_FILE=certs/ca-bundle.pem REQUESTS_CA_BUNDLE=certs/ca-bundle.pem uv run uvicorn app.main:app --reload --port 8000
 
 up:
 	docker-compose up

@@ -12,7 +12,7 @@ uv sync
 # Run locally
 uv run uvicorn app.main:app --reload --port 8000
 
-# Run full stack (app + Langfuse + Postgres + Redis)
+# Run app in Docker
 docker-compose up
 
 # Run graph visualisation
@@ -20,7 +20,7 @@ jupyter notebook notebook/visualize_graph.ipynb
 
 # Services
 # App:      http://localhost:8000
-# Langfuse: http://localhost:3000
+# Langfuse: https://cloud.langfuse.com (cloud — see .env)
 
 ---
 

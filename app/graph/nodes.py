@@ -24,9 +24,7 @@ async def evaluate_story(state: StoryState, config: RunnableConfig) -> dict:
     gateway: LLMGateway = config["configurable"]["gateway"]
     story = state["story_data"]
 
-    async with langfuse.start_as_current_observation(
-        name="evaluate_story", as_type="span", input=story
-    ):
+    with langfuse.start_as_current_observation(name="evaluate_story", as_type="span", input=story):
         system_prompt = get_prompt("evaluate_story", "system")
         user_prompt = get_prompt(
             "evaluate_story",
@@ -75,7 +73,7 @@ async def generate_output(state: StoryState, config: RunnableConfig) -> dict:
     gateway: LLMGateway = config["configurable"]["gateway"]
     evaluation = state["evaluation"]
 
-    async with langfuse.start_as_current_observation(
+    with langfuse.start_as_current_observation(
         name="generate_output", as_type="span", input={"evaluation": evaluation}
     ):
         system_prompt = get_prompt("generate_output", "system")
@@ -109,7 +107,7 @@ async def determine_category(state: StoryState, config: RunnableConfig) -> dict:
     langfuse: Langfuse = config["configurable"]["langfuse"]
     rounded_score = state["rounded_score"]
 
-    async with langfuse.start_as_current_observation(
+    with langfuse.start_as_current_observation(
         name="determine_category", as_type="span", input={"rounded_score": rounded_score}
     ):
         category = "NOT READY" if rounded_score <= 3 else "READY"
@@ -126,7 +124,7 @@ async def jira_write(state: StoryState, config: RunnableConfig) -> dict:
     category = state["category"]
     jira_comment = state["jira_comment"]
 
-    async with langfuse.start_as_current_observation(
+    with langfuse.start_as_current_observation(
         name="jira_write", as_type="span", input={"issue_key": issue_key, "category": category}
     ):
         try:

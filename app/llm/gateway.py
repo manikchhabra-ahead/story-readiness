@@ -32,11 +32,11 @@ class LLMGateway:
             max_tokens=1024,
             system=system,
             messages=messages,
-            response_format=response_model,
+            output_format=response_model,
         )
 
         latency_ms = (time.time() - start) * 1000
-        result: T = response.parsed
+        result: T = response.parsed_output
 
         logger.info(
             "LLM call completed: model=%s input_tokens=%d output_tokens=%d latency_ms=%.0f",

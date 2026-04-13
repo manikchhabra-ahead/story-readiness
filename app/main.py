@@ -33,7 +33,7 @@ def verify_api_key(
 async def run_pipeline(payload: JiraWebhookPayload, settings: Settings) -> None:
     gateway = LLMGateway(settings)
     jira_client = JiraClient(settings)
-    langfuse = create_langfuse_client()
+    langfuse = create_langfuse_client(settings)
 
     try:
         initial_state = {
@@ -41,7 +41,7 @@ async def run_pipeline(payload: JiraWebhookPayload, settings: Settings) -> None:
             "story_data": payload.model_dump(),
         }
 
-        async with langfuse.start_as_current_observation(name=payload.issue_key):
+        with langfuse.start_as_current_observation(name=payload.issue_key):
             await compiled_graph.ainvoke(
                 initial_state,
                 config={

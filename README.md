@@ -6,7 +6,7 @@ AI-powered workflow that evaluates Jira stories for development readiness. When 
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) package manager
-- Docker and Docker Compose (for full stack)
+- Docker and Docker Compose (optional, for containerised app)
 
 ## Quickstart
 
@@ -20,7 +20,7 @@ cp .env.example .env
 # Run locally
 uv run uvicorn app.main:app --reload --port 8000
 
-# Run full stack (app + Langfuse + Postgres + Redis)
+# Run app in Docker (optional)
 docker-compose up
 ```
 
@@ -35,7 +35,7 @@ docker-compose up
 
 ## Services
 
-| Service  | URL                    |
-|----------|------------------------|
-| App      | http://localhost:8000  |
-| Langfuse | http://localhost:3000  |
+| Service  | URL                          |
+|----------|------------------------------|
+| App      | http://localhost:8000         |
+| Langfuse | https://cloud.langfuse.com   |

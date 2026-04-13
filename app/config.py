@@ -9,9 +9,13 @@ class Settings(BaseSettings):
     JIRA_API_TOKEN: str
     JIRA_USER_EMAIL: str
     ANTHROPIC_API_KEY: str
+    LANGFUSE_PUBLIC_KEY: str
+    LANGFUSE_SECRET_KEY: str
+    LANGFUSE_HOST: str
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 @lru_cache
