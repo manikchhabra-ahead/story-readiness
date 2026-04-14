@@ -21,4 +21,8 @@ class JiraWebhookPayload(BaseModel):
     @field_validator("labels", "components", mode="before")
     @classmethod
     def parse_list_fields(cls, v):
-        return [] if v == "" else v
+        if v is None or v == "":
+            return []
+        if isinstance(v, str):
+            return [item.strip() for item in v.split(",") if item.strip()]
+        return v
