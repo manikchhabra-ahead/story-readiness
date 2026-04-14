@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class JiraWebhookPayload(BaseModel):
@@ -12,3 +12,13 @@ class JiraWebhookPayload(BaseModel):
     labels: Optional[list[str]] = Field(default_factory=list)
     components: Optional[list[str]] = Field(default_factory=list)
     priority: Optional[str] = None
+
+    @field_validator("story_points", mode="before")
+    @classmethod
+    def parse_story_points(cls, v):
+        return None if v == "" else v
+
+    @field_validator("labels", "components", mode="before")
+    @classmethod
+    def parse_list_fields(cls, v):
+        return [] if v == "" else v
