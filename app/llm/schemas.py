@@ -25,4 +25,10 @@ class GenerateOutputResponse(BaseModel):
     remediation_suggestions: list[RemediationItem] = Field(
         description="Suggestions only for criteria scoring 1-3"
     )
-    jira_comment: str = Field(description="Formatted comment ready to post to Jira")
+    blocker_summary: str = Field(
+        description=(
+            "One plain-English sentence naming the blocking criteria (those "
+            "scoring 1 or 2) and what the reporter must do. Empty string if "
+            "there are no blockers."
+        )
+    )

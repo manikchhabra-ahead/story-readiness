@@ -31,7 +31,9 @@ class StoryState(TypedDict):
     # Node 2 output
     final_score: Optional[float]
     rounded_score: Optional[int]
+    min_score: Optional[int]
     remediation_suggestions: Optional[list[RemediationSuggestion]]
+    blocker_summary: Optional[str]
     jira_comment: Optional[str]
 
     # Node 3 output

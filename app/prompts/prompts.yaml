@@ -11,14 +11,34 @@ evaluate_story:
     2 - Significant gaps that would block or confuse a developer.
     1 - Missing or unusable.
 
-    If a field is missing or empty, score it 1 and state that it is absent in your reasoning.
+    STRICT SOURCING RULES — each criterion is scored ONLY against its named
+    source field(s). Do NOT infer evidence from adjacent fields. A story that
+    has a rich Description but an empty Acceptance Criteria field must still
+    score acceptance_criteria_quality = 1.
 
-    Criteria:
-    - user_story_clarity: Is there a clear who/what/why? Is the scope unambiguous?
-    - acceptance_criteria_quality: Are the criteria testable, specific, and verifiable — not just present?
-    - technical_clarity: Is there enough detail for a developer to start without asking questions?
-    - dependencies: Does the story acknowledge external dependencies or blockers?
-    - sizing: Is the story small enough to complete within a single sprint?
+    If the named source field is "Not provided", empty, or whitespace-only,
+    score that criterion 1 and say so in the reasoning.
+
+    Criteria and their source fields:
+    - user_story_clarity
+        Source: Summary + Description.
+        Good: clear who / what / why, unambiguous scope.
+    - acceptance_criteria_quality
+        Source: Acceptance Criteria ONLY. Ignore the description.
+        Good: at least 2 distinct, testable, verifiable statements
+        (Given/When/Then or equivalent). Fewer than 2 testable statements
+        in the Acceptance Criteria field → score ≤ 2.
+    - technical_clarity
+        Source: Description ONLY.
+        Good: enough detail (APIs, data, edge cases) for a dev to start
+        without asking follow-up questions.
+    - dependencies
+        Source: explicit dependency / blocker / out-of-scope mentions
+        anywhere in Summary, Description, or Acceptance Criteria.
+        No explicit mention → score 1 or 2.
+    - sizing
+        Source: Story Points + scope boundaries in Description.
+        Story Points "Not provided" → cap the score at 3.
 
   user: |
     Evaluate the following Jira story:
@@ -33,49 +53,39 @@ evaluate_story:
 
 generate_output:
   system: |
-    You are generating a structured development readiness report from a story evaluation.
-    You will receive scores and reasoning for 5 criteria.
-    Your job is to:
-    1. Calculate the final score as the average of all 5 criterion scores, rounded to the nearest whole number.
-    2. Generate remediation suggestions only for criteria that scored 1, 2, or 3.
-       Each suggestion must explicitly name the criterion it addresses and provide a specific, actionable fix.
-    3. Generate a jira_comment string ready to post directly to Jira.
-       Use the READY format if rounded_score >= 4, NOT READY format if rounded_score <= 3.
+    You are summarizing a Jira story evaluation for a reporter who may not know
+    why their story failed readiness. You will receive:
+    - the 5 criterion scores and reasoning,
+    - the computed final_score and rounded_score,
+    - a min_score (lowest single criterion score),
+    - a list of blocker_criteria (those scoring 1 or 2).
 
-    READY comment format:
-    ✅ Story Readiness Analysis
-    Score: {rounded_score}/5 — READY FOR DEV
-    Analyzed: {timestamp}
+    Your job:
+    1. Echo back final_score and rounded_score exactly as given.
+    2. For every criterion scoring 1, 2, or 3, produce one remediation suggestion.
+       Name the criterion explicitly. Be specific and actionable — tell the
+       reporter what to add, not just that something is missing.
+       Example (good): "Add 3-5 Given/When/Then statements covering the happy
+       path, the over-limit rejection, and the after-hours rejection."
+       Example (bad): "Improve acceptance criteria."
+    3. Write a single-sentence blocker_summary in plain English that names the
+       blocking criteria (from blocker_criteria) and what the reporter must do.
+       If blocker_criteria is empty, set blocker_summary to "" (empty string).
+       Example: "Acceptance Criteria is empty and Technical Clarity is too thin
+       for a developer to start — add testable criteria and expand the
+       implementation notes."
 
-    Criteria breakdown:
-    - User Story Clarity: {score}/5 — {reasoning}
-    - Acceptance Criteria: {score}/5 — {reasoning}
-    - Technical Clarity: {score}/5 — {reasoning}
-    - Dependencies: {score}/5 — {reasoning}
-    - Sizing: {score}/5 — {reasoning}
-
-    No blockers found. Story is cleared for development.
-
-    NOT READY comment format:
-    🚫 Story Readiness Analysis
-    Score: {rounded_score}/5 — NOT READY FOR DEV
-    Analyzed: {timestamp}
-
-    Criteria breakdown:
-    - User Story Clarity: {score}/5 — {reasoning}
-    - Acceptance Criteria: {score}/5 — {reasoning}
-    - Technical Clarity: {score}/5 — {reasoning}
-    - Dependencies: {score}/5 — {reasoning}
-    - Sizing: {score}/5 — {reasoning}
-
-    Gaps identified:
-    - [{criterion}] {suggestion}
-
-    Please address the above and transition back to Dev Ready.
+    Do NOT produce a jira_comment string. The comment is assembled by the
+    application from your structured output.
 
   user: |
-    Here is the evaluation result:
+    Evaluation:
     {evaluation}
 
+    final_score: {final_score}
+    rounded_score: {rounded_score}
+    min_score: {min_score}
+    blocker_criteria: {blocker_criteria}
+
     Current timestamp: {timestamp}
-    Generate the full output now.
+    Produce the structured output now.
