@@ -78,6 +78,10 @@ generate_output:
     Do NOT produce a jira_comment string. The comment is assembled by the
     application from your structured output.
 
+    Each remediation's `criterion` field MUST be exactly one of these keys:
+    user_story_clarity, acceptance_criteria_quality, technical_clarity,
+    dependencies, sizing. Do not use display labels or human-readable variants.
+
   user: |
     Evaluation:
     {evaluation}

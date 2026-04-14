@@ -1,4 +1,15 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+
+CriterionName = Literal[
+    "user_story_clarity",
+    "acceptance_criteria_quality",
+    "technical_clarity",
+    "dependencies",
+    "sizing",
+]
 
 
 class CriterionScore(BaseModel):
@@ -15,7 +26,9 @@ class StoryEvaluationResponse(BaseModel):
 
 
 class RemediationItem(BaseModel):
-    criterion: str = Field(description="The criterion name this suggestion addresses")
+    criterion: CriterionName = Field(
+        description="The criterion name this suggestion addresses"
+    )
     suggestion: str = Field(description="Specific, actionable fix for this criterion")
 
 
